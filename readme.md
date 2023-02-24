@@ -8,4 +8,4 @@ a minimal narrow region implementation for nvim
 * haolian9/infra.nvim
 
 ## usage
-* `.tab/vsplit/split()`
+* select text then `:lua require'nag'.vsplit()`
