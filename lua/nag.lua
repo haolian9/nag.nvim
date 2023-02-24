@@ -76,15 +76,17 @@ local function setup(src_win_id, src_bufnr, open_win_cmd)
     end
 
     -- NB: with buftype=acwrite, bufhidden=wipe
-    -- * :w             -> event:bufwritecmd sync
-    -- * :q+&unmodified -> event:bufwritecmd sync
-    -- * :q+&modified   -> event:none        error
-    -- * :q!            -> event:none        discard
-    -- * :x             -> event:bufwritecmd sync
-
+    -- * :w             -> event:bufwritecmd            sync
+    -- * :q+&unmodified -> event:bufwritecmd            sync
+    -- * :q+&modified   -> event:none                   error
+    -- * :q!            -> event:none                   discard
+    -- * :x             -> event:bufwritecmd&bufwipeout sync
+    local ran = false
     api.nvim_create_autocmd({ "BufWriteCmd", "BufWipeout" }, {
       buffer = nag_bufnr,
       callback = function()
+        if ran then return end
+        ran = true
         mux:release()
         if not api.nvim_buf_is_valid(origin_state.bufnr) then return end
         if not vim.bo[nag_bufnr].modified then return end
