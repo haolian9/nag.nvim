@@ -4,11 +4,10 @@
 --
 -- features/limits
 -- * aimed to selection lines, not range
--- * keep indents as is
--- * no nag on nag
+-- * no nested nag
 -- * only one nag for one buffer
--- * is hard to properly maintain original buffer's &modifiable, so let user concern it
--- * no syntax/filetype, treesitter/lsp support at now
+-- * hard to properly maintain the original buffer's &modifiable, so let user concern it
+-- * no syntax/filetype nor treesitter/lsp support at now
 --
 
 local M = {}
@@ -20,14 +19,12 @@ local sync = require("infra.sync_primitives")
 local jelly = require("infra.jellyfish")("nag")
 local bufrename = require("infra.bufrename")
 local ex = require("infra.ex")
+local prefer = require("infra.prefer")
+local strlib = require("infra.strlib")
 
-local function make_nag_name(bufname, start, stop)
-  return string.format("nag://%s@%s-%s", vim.fn.fnamemodify(bufname, ":t"), start, stop)
-end
+local function make_nag_name(bufname, start, stop) return string.format("nag://%s@%s~%s", vim.fn.fnamemodify(bufname, ":t"), start, stop) end
 
-local function is_valid_nag_buf(bufname)
-  return vim.startswith(bufname, "nag://")
-end
+local function is_valid_nag_buf(bufname) return strlib.startswith(bufname, "nag://") end
 
 local function setup(src_win_id, src_bufnr, open_win_cmd)
   assert(src_win_id and src_bufnr and open_win_cmd)
@@ -36,18 +33,17 @@ local function setup(src_win_id, src_bufnr, open_win_cmd)
   local selines
   do
     local bufname = api.nvim_buf_get_name(src_bufnr)
-    if is_valid_nag_buf(bufname) then
-      jelly.warn("nag on nag")
-      return
-    end
+    if is_valid_nag_buf(bufname) then return jelly.warn("nag on nag") end
 
-    local start_row, _, stop_row, _ = vsel.range(src_bufnr)
+    local range = vsel.range(src_bufnr)
+    if range == nil then return jelly.warn("no selection") end
+
     origin_state = {
-      win_id = src_win_id,
+      winid = src_win_id,
       bufnr = src_bufnr,
       name = bufname,
-      start_row = start_row,
-      stop_row = stop_row,
+      start_line = range.start_line,
+      stop_line = range.stop_line,
     }
 
     selines = vsel.multiline_text(origin_state.bufnr)
@@ -65,11 +61,11 @@ local function setup(src_win_id, src_bufnr, open_win_cmd)
   -- setup nag buf
   do
     nag_bufnr = api.nvim_create_buf(false, true)
-    nag_bufname = make_nag_name(origin_state.name, origin_state.start_row, origin_state.stop_row)
+    nag_bufname = make_nag_name(origin_state.name, origin_state.start_line, origin_state.stop_line)
     do
       bufrename(nag_bufnr, nag_bufname)
       api.nvim_buf_set_lines(nag_bufnr, 0, #selines, false, selines)
-      local bo = vim.bo[nag_bufnr]
+      local bo = prefer.buf(nag_bufnr)
       bo.buftype = "acwrite"
       bo.modified = false
       bo.bufhidden = "wipe"
@@ -84,16 +80,18 @@ local function setup(src_win_id, src_bufnr, open_win_cmd)
     local ran = false
     api.nvim_create_autocmd({ "BufWriteCmd", "BufWipeout" }, {
       buffer = nag_bufnr,
+      once = true,
       callback = function()
         if ran then return end
         ran = true
         mux:release()
         if not api.nvim_buf_is_valid(origin_state.bufnr) then return end
-        if not vim.bo[nag_bufnr].modified then return end
+        local bo = prefer.buf(nag_bufnr)
+        if not bo.modified then return end
         local ok, err = xpcall(function()
           local lines = api.nvim_buf_get_lines(nag_bufnr, 0, -1, true)
-          api.nvim_buf_set_lines(origin_state.bufnr, origin_state.start_row - 1, origin_state.stop_row, false, lines)
-          vim.bo[nag_bufnr].modified = false
+          api.nvim_buf_set_lines(origin_state.bufnr, origin_state.start_line, origin_state.stop_line, false, lines)
+          bo.modified = false
         end, debug.traceback)
         if not ok then jelly.error(err) end
       end,
@@ -104,7 +102,7 @@ local function setup(src_win_id, src_bufnr, open_win_cmd)
   do
     ex(open_win_cmd, nag_bufname)
     local nag_winid = api.nvim_get_current_win()
-    assert(nag_winid ~= origin_state.win_id)
+    assert(nag_winid ~= origin_state.winid)
     api.nvim_win_set_buf(nag_winid, nag_bufnr)
   end
 end
