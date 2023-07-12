@@ -14,13 +14,13 @@ local M = {}
 
 local api = vim.api
 
-local vsel = require("infra.vsel")
-local sync = require("infra.sync_primitives")
-local jelly = require("infra.jellyfish")("nag")
 local bufrename = require("infra.bufrename")
 local ex = require("infra.ex")
+local jelly = require("infra.jellyfish")("nag")
 local prefer = require("infra.prefer")
 local strlib = require("infra.strlib")
+local sync = require("infra.sync_primitives")
+local vsel = require("infra.vsel")
 
 local function make_nag_name(bufname, start, stop) return string.format("nag://%s@%s~%s", vim.fn.fnamemodify(bufname, ":t"), start, stop) end
 
