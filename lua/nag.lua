@@ -15,6 +15,7 @@ local M = {}
 local api = vim.api
 
 local bufrename = require("infra.bufrename")
+local ctx = require("infra.ctx")
 local ex = require("infra.ex")
 local jelly = require("infra.jellyfish")("nag")
 local prefer = require("infra.prefer")
@@ -79,7 +80,7 @@ do
         end,
       })
 
-      api.nvim_buf_set_lines(nag_bufnr, 0, #selines, false, selines)
+      ctx.no_undo(bo, function() api.nvim_buf_set_lines(nag_bufnr, 0, #selines, false, selines) end)
     end
 
     local nag_bufname
