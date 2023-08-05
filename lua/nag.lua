@@ -16,6 +16,7 @@ local api = vim.api
 
 local bufrename = require("infra.bufrename")
 local ctx = require("infra.ctx")
+local Ephemeral = require("infra.Ephemeral")
 local ex = require("infra.ex")
 local jelly = require("infra.jellyfish")("nag")
 local prefer = require("infra.prefer")
@@ -52,16 +53,12 @@ do
       if selines == nil then return end
     end
 
+    local mux = sync.create_buf_mutex(origin_state.bufnr, "nag")
+    if not mux:acquire() then return jelly.warn("nag is running already") end
+
     local nag_bufnr
     do -- setup nag buf
-      nag_bufnr = api.nvim_create_buf(false, true)
-
-      local bo = prefer.buf(nag_bufnr)
-      bo.buftype = "nofile"
-      bo.bufhidden = "wipe"
-
-      local mux = sync.create_buf_mutex(origin_state.bufnr, "nag")
-      if not mux:acquire() then return jelly.warn("nag is running already") end
+      nag_bufnr = Ephemeral({ modifiable = true }, selines)
       local tick0 = api.nvim_buf_get_changedtick(nag_bufnr)
 
       api.nvim_create_autocmd("bufwipeout", {
@@ -79,8 +76,6 @@ do
           if not ok then jelly.error(err) end
         end,
       })
-
-      ctx.no_undo(bo, function() api.nvim_buf_set_lines(nag_bufnr, 0, #selines, false, selines) end)
     end
 
     local nag_bufname
