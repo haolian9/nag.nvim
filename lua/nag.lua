@@ -15,11 +15,9 @@ local M = {}
 local api = vim.api
 
 local bufrename = require("infra.bufrename")
-local ctx = require("infra.ctx")
 local Ephemeral = require("infra.Ephemeral")
 local ex = require("infra.ex")
 local jelly = require("infra.jellyfish")("nag")
-local prefer = require("infra.prefer")
 local strlib = require("infra.strlib")
 local sync = require("infra.sync_primitives")
 local vsel = require("infra.vsel")
