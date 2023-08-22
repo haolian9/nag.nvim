@@ -15,7 +15,6 @@ local M = {}
 
 local api = vim.api
 
-local bufrename = require("infra.bufrename")
 local ctx = require("infra.ctx")
 local Ephemeral = require("infra.Ephemeral")
 local ex = require("infra.ex")
@@ -119,7 +118,10 @@ do
 
     local nag_bufnr
     do
-      nag_bufnr = Ephemeral({ modifiable = true }, api.nvim_buf_get_lines(host.bufnr, host.start, host.stop, false))
+      local function namefn() return make_nag_name(host.name, host.start, host.stop) end
+      local lines = api.nvim_buf_get_lines(host.bufnr, host.start, host.stop, false)
+      nag_bufnr = Ephemeral({ modifiable = true, namefn = namefn }, lines)
+
       local tick0 = api.nvim_buf_get_changedtick(nag_bufnr)
 
       api.nvim_create_autocmd("bufwipeout", {
@@ -135,14 +137,8 @@ do
       })
     end
 
-    local nag_name
     do
-      nag_name = make_nag_name(host.name, host.start, host.stop)
-      bufrename(nag_bufnr, nag_name)
-    end
-
-    do
-      ex(edit_cmd, nag_name)
+      ex(edit_cmd, api.nvim_buf_get_name(nag_bufnr))
       local nag_winid = api.nvim_get_current_win()
       assert(nag_winid ~= host.winid)
       assert(api.nvim_win_get_buf(nag_winid) == nag_bufnr)
