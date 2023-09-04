@@ -15,7 +15,6 @@ local M = {}
 
 local api = vim.api
 
-local Augroup = require("infra.Augroup")
 local ctx = require("infra.ctx")
 local Ephemeral = require("infra.Ephemeral")
 local ex = require("infra.ex")
