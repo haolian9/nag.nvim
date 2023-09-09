@@ -22,6 +22,7 @@ local jelly = require("infra.jellyfish")("nag")
 local strlib = require("infra.strlib")
 local sync = require("infra.sync_primitives")
 local vsel = require("infra.vsel")
+local winsplit = require("infra.winsplit")
 
 local launch
 do
@@ -106,9 +107,9 @@ do
   end
 
   ---@param host_winid integer
-  ---@param edit_cmd string @sp,vs,tabe ..., but no modifiers
-  function launch(host_winid, edit_cmd)
-    assert(host_winid and edit_cmd)
+  ---@param open_win fun(bufnr:integer): integer @to open a window to show the nag buffer
+  function launch(host_winid, open_win)
+    host_winid = host_winid or api.nvim_get_current_win()
 
     local host = Host(host_winid)
     if host == nil then return end
@@ -138,7 +139,7 @@ do
     end
 
     do
-      ex(edit_cmd, api.nvim_buf_get_name(nag_bufnr))
+      open_win(nag_bufnr)
       local nag_winid = api.nvim_get_current_win()
       assert(nag_winid ~= host.winid)
       assert(api.nvim_win_get_buf(nag_winid) == nag_bufnr)
@@ -146,14 +147,19 @@ do
   end
 end
 
-do
-  local function launcher(edit_cmd)
-    return function() launch(api.nvim_get_current_win(), edit_cmd) end
-  end
+function M.tab()
+  launch(api.nvim_get_current_win(), function(bufnr)
+    ex("tabedit", api.nvim_buf_get_name(bufnr))
+    return api.nvim_get_current_win()
+  end)
+end
 
-  M.tab = launcher("tabe")
-  M.split = launcher("split")
-  M.vsplit = launcher("vsplit")
+function M.split(side)
+  if side == nil then side = "right" end
+  launch(api.nvim_get_current_win(), function(bufnr)
+    winsplit(side, api.nvim_buf_get_name(bufnr))
+    return api.nvim_get_current_win()
+  end)
 end
 
 return M
