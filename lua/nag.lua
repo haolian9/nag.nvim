@@ -121,7 +121,7 @@ do
     do
       local function namefn() return make_nag_name(host.name, host.start, host.stop) end
       local lines = api.nvim_buf_get_lines(host.bufnr, host.start, host.stop, false)
-      nag_bufnr = Ephemeral({ modifiable = true, namefn = namefn }, lines)
+      nag_bufnr = Ephemeral({ modifiable = true, namefn = namefn, undolevels = vim.go.undolevels }, lines)
 
       local tick0 = api.nvim_buf_get_changedtick(nag_bufnr)
 
@@ -139,8 +139,7 @@ do
     end
 
     do
-      open_win(nag_bufnr)
-      local nag_winid = api.nvim_get_current_win()
+      local nag_winid = open_win(nag_bufnr)
       assert(nag_winid ~= host.winid)
       assert(api.nvim_win_get_buf(nag_winid) == nag_bufnr)
     end
