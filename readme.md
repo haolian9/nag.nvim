@@ -17,7 +17,24 @@ an example of narrow region implementation for nvim
 * haolian9/infra.nvim
 
 ## usage
-* select text then `:lua require'nag'.vsplit()`
+* select text then `:lua require'nag'.tab()` or `nag.split(side: 'right'|'left'|'above'|'below')`
+* an example for adding a usercmd, requiring haolian9/cmds.nvim
+```
+do --:Nag
+  local function action(args)
+    local open = args.open
+    local nag = require("nag")
+    if open == "tab" then return nag.tab() end
+    nag.split(open)
+  end
+  local comp = cmds.ArgComp.constant({ "tab", "left", "right", "above", "below" })
+
+  local spell = cmds.Spell("Nag", action)
+  spell:enable("range")
+  spell:add_arg("open", "string", false, "tab", comp)
+  cmds.cast(spell)
+end
+```
 
 ## thanks
 * NrrwRgn.vim was my good old friend, and is the one that inspired this plugin.
