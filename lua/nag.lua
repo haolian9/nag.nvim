@@ -92,7 +92,7 @@ do
   local function Host(winid)
     local bufnr = api.nvim_win_get_buf(winid)
     local bufname = api.nvim_buf_get_name(bufnr)
-    if is_nag_buf(bufname) then return jelly.warn("nag on nag") end
+    if is_nag_buf(bufname) then return jelly.warn("no nag-on-nag") end
 
     local range = vsel.range(bufnr)
     if range == nil then return jelly.warn("no selection") end
@@ -114,8 +114,8 @@ do
     local host = Host(host_winid)
     if host == nil then return end
 
-    local mux = sync.create_buf_mutex(host.bufnr, "nag")
-    if not mux:acquire() then return jelly.warn("nag is running already") end
+    local mux = sync.BufMutex(host.bufnr, "nag")
+    if not mux:acquire_nowait() then return jelly.warn("nagging in buf#%d already", host.bufnr) end
 
     local nag_bufnr
     do
