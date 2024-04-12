@@ -15,6 +15,7 @@ local M = {}
 
 local api = vim.api
 
+local buflines = require("infra.buflines")
 local ctx = require("infra.ctx")
 local Ephemeral = require("infra.Ephemeral")
 local ex = require("infra.ex")
@@ -35,7 +36,7 @@ do
   ---@param stop integer
   ---@return string
   local function join_lines(bufnr, start, stop)
-    local lines = api.nvim_buf_get_lines(bufnr, start, stop, false)
+    local lines = buflines.lines(bufnr, start, stop)
     table.insert(lines, "\n")
     return table.concat(lines, "\n")
   end
@@ -61,7 +62,7 @@ do
         lines = {}
       else
         local start = start_b - 1
-        lines = api.nvim_buf_get_lines(nag_bufnr, start, start + count_b, false)
+        lines = buflines.lines(nag_bufnr, start, start + count_b)
       end
 
       do
@@ -76,7 +77,7 @@ do
           start = start_a - 1 + offset
           stop = start + count_a
         end
-        api.nvim_buf_set_lines(host.bufnr, start, stop, false, lines)
+        buflines.replaces(host.bufnr, start, stop, lines)
       end
     end
   end
@@ -120,7 +121,7 @@ do
     local nag_bufnr
     do
       local function namefn() return make_nag_name(host.name, host.start, host.stop) end
-      local lines = api.nvim_buf_get_lines(host.bufnr, host.start, host.stop, false)
+      local lines = buflines.lines(host.bufnr, host.start, host.stop)
       nag_bufnr = Ephemeral({ modifiable = true, namefn = namefn, undolevels = vim.go.undolevels }, lines)
 
       local tick0 = api.nvim_buf_get_changedtick(nag_bufnr)
