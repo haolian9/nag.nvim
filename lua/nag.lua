@@ -19,6 +19,7 @@ local buflines = require("infra.buflines")
 local ctx = require("infra.ctx")
 local Ephemeral = require("infra.Ephemeral")
 local ex = require("infra.ex")
+local fn = require("infra.fn")
 local jelly = require("infra.jellyfish")("nag")
 local strlib = require("infra.strlib")
 local sync = require("infra.sync_primitives")
@@ -31,16 +32,6 @@ do
 
   local function is_nag_buf(bufname) return strlib.startswith(bufname, "nag://") end
 
-  ---@param bufnr integer
-  ---@param start integer
-  ---@param stop integer
-  ---@return string
-  local function join_lines(bufnr, start, stop)
-    local lines = buflines.lines(bufnr, start, stop)
-    table.insert(lines, "\n")
-    return table.concat(lines, "\n")
-  end
-
   ---start: lnum, 0-based, inclusive
   ---stop: lnum, 0-based, exclusive
   ---@param host nag.Host
@@ -48,8 +39,8 @@ do
   local function diffpatch(host, nag_bufnr)
     local hunks
     do
-      local a = join_lines(host.bufnr, host.start, host.stop)
-      local b = join_lines(nag_bufnr, 0, -1)
+      local a = buflines.joined(host.bufnr, host.start, host.stop)
+      local b = buflines.joined(nag_bufnr)
       hunks = vim.diff(a, b, { result_type = "indices" })
       if #hunks == 0 then return jelly.debug("no changes") end
     end
