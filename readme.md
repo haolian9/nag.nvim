@@ -9,11 +9,11 @@ an example of narrow region implementation for nvim
 * diff+patch
 
 ## status
-* it just work (tm)
+* just work (tm)
 
 ## prerequisites
 * linux
-* nvim 0.9.*
+* nvim 0.10.*
 * haolian9/infra.nvim
 
 ## usage
