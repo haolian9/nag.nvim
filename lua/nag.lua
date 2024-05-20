@@ -144,10 +144,12 @@ function M.tab()
   end)
 end
 
+---@param side? infra.winsplit.Side @nil=right
 function M.split(side)
   if side == nil then side = "right" end
+
   launch(api.nvim_get_current_win(), function(bufnr)
-    winsplit(side, api.nvim_buf_get_name(bufnr))
+    winsplit(side, bufnr)
     return api.nvim_get_current_win()
   end)
 end
