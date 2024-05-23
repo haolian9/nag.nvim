@@ -139,7 +139,7 @@ end
 
 function M.tab()
   launch(api.nvim_get_current_win(), function(bufnr)
-    ex("tabedit", api.nvim_buf_get_name(bufnr))
+    ex.eval("tab sbuffer %d", bufnr)
     return api.nvim_get_current_win()
   end)
 end
