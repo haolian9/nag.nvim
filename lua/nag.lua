@@ -13,13 +13,12 @@
 
 local M = {}
 
-local api = vim.api
-
 local buflines = require("infra.buflines")
 local ctx = require("infra.ctx")
 local Ephemeral = require("infra.Ephemeral")
 local ex = require("infra.ex")
 local jelly = require("infra.jellyfish")("nag")
+local ni = require("infra.ni")
 local strlib = require("infra.strlib")
 local sync = require("infra.sync_primitives")
 local vsel = require("infra.vsel")
@@ -81,8 +80,8 @@ do
 
   ---@return nag.Host?
   local function Host(winid)
-    local bufnr = api.nvim_win_get_buf(winid)
-    local bufname = api.nvim_buf_get_name(bufnr)
+    local bufnr = ni.win_get_buf(winid)
+    local bufname = ni.buf_get_name(bufnr)
     if is_nag_buf(bufname) then return jelly.warn("no nag-on-nag") end
 
     local range = vsel.range(bufnr)
@@ -100,7 +99,7 @@ do
   ---@param host_winid integer
   ---@param open_win fun(bufnr:integer): integer @to open a window to show the nag buffer
   function launch(host_winid, open_win)
-    host_winid = host_winid or api.nvim_get_current_win()
+    host_winid = host_winid or ni.get_current_win()
 
     local host = Host(host_winid)
     if host == nil then return end
@@ -114,16 +113,16 @@ do
       local lines = buflines.lines(host.bufnr, host.start, host.stop)
       nag_bufnr = Ephemeral({ modifiable = true, namefn = namefn, undolevels = vim.go.undolevels }, lines)
 
-      local tick0 = api.nvim_buf_get_changedtick(nag_bufnr)
+      local tick0 = ni.buf_get_changedtick(nag_bufnr)
 
-      api.nvim_create_autocmd("bufwipeout", {
+      ni.create_autocmd("bufwipeout", {
         buffer = nag_bufnr,
         once = true,
         callback = function()
           mux:release()
-          if not api.nvim_buf_is_valid(host.bufnr) then return jelly.warn("original buf#%d was gone", host.bufnr) end
+          if not ni.buf_is_valid(host.bufnr) then return jelly.warn("original buf#%d was gone", host.bufnr) end
           --determining &modified base on changedtick is not accurate, yet it's still good enough.
-          if api.nvim_buf_get_changedtick(nag_bufnr) == tick0 then return jelly.debug("nag buf has not been modified") end
+          if ni.buf_get_changedtick(nag_bufnr) == tick0 then return jelly.debug("nag buf has not been modified") end
           ctx.undoblock(host.bufnr, function() diffpatch(host, nag_bufnr) end)
         end,
       })
@@ -132,15 +131,15 @@ do
     do
       local nag_winid = open_win(nag_bufnr)
       assert(nag_winid ~= host.winid)
-      assert(api.nvim_win_get_buf(nag_winid) == nag_bufnr)
+      assert(ni.win_get_buf(nag_winid) == nag_bufnr)
     end
   end
 end
 
 function M.tab()
-  launch(api.nvim_get_current_win(), function(bufnr)
+  launch(ni.get_current_win(), function(bufnr)
     ex.eval("tab sbuffer %d", bufnr)
-    return api.nvim_get_current_win()
+    return ni.get_current_win()
   end)
 end
 
@@ -148,9 +147,9 @@ end
 function M.split(side)
   if side == nil then side = "right" end
 
-  launch(api.nvim_get_current_win(), function(bufnr)
+  launch(ni.get_current_win(), function(bufnr)
     winsplit(side, bufnr)
-    return api.nvim_get_current_win()
+    return ni.get_current_win()
   end)
 end
 
