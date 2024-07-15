@@ -84,7 +84,7 @@ do
     local bufname = ni.buf_get_name(bufnr)
     if is_nag_buf(bufname) then return jelly.warn("no nag-on-nag") end
 
-    local range = vsel.range(bufnr)
+    local range = vsel.range(bufnr, true)
     if range == nil then return jelly.warn("no selection") end
 
     return {
