@@ -13,20 +13,15 @@ an example of narrow region implementation for nvim
 
 ## prerequisites
 * linux
-* nvim 0.12.*
+* nvim 0.10.*
 * haolian9/infra.nvim
 
 ## usage
-* select text then `:lua require'nag'.tab()` or `nag.split(side: 'right'|'left'|'above'|'below')`
+* select text then `:lua require'nag'()` or `nag(nil, open_mode: 'tab'|'right'|'left'|'above'|'below')`
 * an example for adding a usercmd, requiring haolian9/cmds.nvim
 ```
 do --:Nag
-  local function action(args)
-    local open = args.open
-    local nag = require("nag")
-    if open == "tab" then return nag.tab() end
-    nag.split(open)
-  end
+  local function action(args) require("nag")(ni.get_current_win(), args.open) end
   local comp = cmds.ArgComp.constant({ "tab", "left", "right", "above", "below" })
 
   local spell = cmds.Spell("Nag", action)
