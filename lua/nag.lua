@@ -16,6 +16,7 @@ local bufopen = require("infra.bufopen")
 local ctx = require("infra.ctx")
 local Ephemeral = require("infra.Ephemeral")
 local jelly = require("infra.jellyfish")("nag")
+local mi = require("infra.mi")
 local ni = require("infra.ni")
 local strlib = require("infra.strlib")
 local sync = require("infra.sync_primitives")
@@ -94,7 +95,7 @@ end
 ---@param host_winid? integer @nil = current
 ---@param open_mode? infra.bufopen.Mode @nil='right'
 return function(host_winid, open_mode)
-  host_winid = host_winid or ni.get_current_win()
+  host_winid = mi.resolve_winid_param(host_winid)
   open_mode = open_mode or "right"
 
   local host = Host(host_winid)
