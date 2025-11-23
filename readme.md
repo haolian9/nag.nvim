@@ -13,7 +13,7 @@ an example of narrow region implementation for nvim
 
 ## prerequisites
 * linux
-* nvim 0.10.*
+* nvim 0.11.*
 * haolian9/infra.nvim
 
 ## usage
@@ -21,7 +21,7 @@ an example of narrow region implementation for nvim
 * an example for adding a usercmd, requiring haolian9/cmds.nvim
 ```
 do --:Nag
-  local function action(args) require("nag")(ni.get_current_win(), args.open) end
+  local function action(args) require("nag")(0, args.open) end
   local comp = cmds.ArgComp.constant({ "tab", "left", "right", "above", "below" })
 
   local spell = cmds.Spell("Nag", action)
@@ -32,4 +32,4 @@ end
 ```
 
 ## thanks
-* NrrwRgn.vim was my good old friend, and is the one that inspired this plugin.
+* NrrwRgn.vim, my good old friend, the one inspired this plugin.
